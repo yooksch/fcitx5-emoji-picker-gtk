@@ -91,8 +91,6 @@ void Window::handle_fcitx_key_event(fcitx::KeyEvent& event) {
     case KEY_ESCAPE:
       break;
     case KEY_RETURN: {
-      auto x = m_emoji_buttons[m_cursor_y * EMOJI_GRID_WIDTH + m_cursor_x];
-      std::cout << "name: " << x->get_emoji().name << " emoji: " << x->get_emoji().code << "\n";
       commit_string(m_emoji_buttons[m_cursor_y * EMOJI_GRID_WIDTH + m_cursor_x]->get_emoji().code);
       break;}
     case KEY_BACKSPACE:
