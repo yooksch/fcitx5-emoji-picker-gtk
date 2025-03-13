@@ -245,9 +245,12 @@ void Window::set_window_pos(const fcitx::Rect& rect) {
 }
 
 void Window::reset() {
-  m_search.set_text("");
-  m_scroll = 0;
-  set_cursor_pos(0, 0);
-  update_search_results();
-  update_emoji_grid();
+  Glib::signal_idle().connect([this]() {
+    m_search.set_text("");
+    m_scroll = 0;
+    set_cursor_pos(0, 0);
+    update_search_results();
+    update_emoji_grid();
+    return false;
+  });
 }
