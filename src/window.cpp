@@ -56,7 +56,7 @@ Window::Window() {
       int column = c;
       button->signal_clicked().connect([=, this]() {
         set_cursor_pos(column, row);
-        commit_string(m_emoji_buttons[row * EMOJI_GRID_WIDTH * column]->get_emoji().code);
+        commit_string(m_emoji_buttons[row * EMOJI_GRID_WIDTH + column]->get_emoji().code);
       });
 
       m_grid.attach(*button, c, r);
