@@ -1,5 +1,4 @@
 # Generate a C++ array (Emoji[n] from src/emojis.hpp) from https://unicode.org/Public/emoji/14.0/emoji-test.txt and https://api.github.com/emojis
-# TODO: Rewrite this to be not-messy
 
 import requests
 import unicodedata
@@ -26,21 +25,23 @@ def fetch_from_unicode_org():
     res = requests.get("https://unicode.org/Public/emoji/14.0/emoji-test.txt")
     lines = [l for l in res.text.splitlines() if not l.startswith("#") and len(l) > 0]
 
+    exp = re.compile(r"^([a-fA-F0-9 ]*[a-zA-Z0-9]+).*;.*?(\S+).*?#.+?(!?[E\d+\.\d+]+).+?(.+)") # Could probably optimize this more
     for line in lines:
-        x = line.split(";", maxsplit=1)
-        codepoints = x[0].strip().lower()
-        status, emoji = x[1].split("#", maxsplit=1)
-        if status.strip() != "fully-qualified":
+        match = exp.match(line)
+        if match is None:
             continue
 
-        name = clean_name(emoji.split(" ", maxsplit=3)[-1].lower().replace(" ", "_"))
-        if name.startswith("flag:"):
-            name = name[6:] + "_flag"
+        codepoints, status, _, name = match.groups()
 
-        name = "".join([c for c in name if c.isalnum() or c == "_"])
-        name = remove_repeating(name, "_")
+        if status != "fully-qualified":
+            continue
 
-        emojis.append((codepoints.split(" "), name))
+        name = clean_name(name.lower())
+        name = "".join([c for c in name if c.isalnum() or c.isspace()])
+        name = name.replace(" ", "_")
+
+        emojis.append((codepoints.lower().split(" "), name))
+
 
 def fetch_from_github_api():
     global emojis
@@ -48,6 +49,7 @@ def fetch_from_github_api():
     res = requests.get("https://api.github.com/emojis")
     body = res.json()
 
+    exp = re.compile(r".+/([a-fA-F0-9\-]+).+")
     for alias, url in body.items():
         # Check if the emoji exists under the same name
         exists = False
@@ -57,9 +59,16 @@ def fetch_from_github_api():
         if exists:
             continue
 
-        codepoints = url.split("/")[-1].split(".")[0].lower()
+        match = exp.match(url)
+        if match is None:
+            continue
+
+        codepoints = match.group(1)
+        if codepoints == "e": # A bunch of files are just named e.png
+            continue
+
         if "-" in codepoints:
-            # Search previous results to get full sequence (github doesn't include ZWJ). Requires fetch_from_unicode_org() to be called first
+            # Search previous results to get full sequence (github doesn't include ZWJ or other control characters). Requires fetch_from_unicode_org() to be called first
             codepoints = codepoints.split("-")
             for emoji in emojis:
                 x = [c for c in emoji[0] if c != "200d" and c != "fe0f"]
@@ -67,8 +76,6 @@ def fetch_from_github_api():
                     codepoints = emoji[0]
                     break
         else:
-            if not re.match(r'^[0-9a-f]+$', codepoints):
-                continue
             codepoints = [codepoints]
 
         emojis.append((codepoints, alias))

@@ -18,4 +18,4 @@ struct EmojiHash {
   }
 };
 
-extern const Emoji emojis[4541];
+extern const Emoji emojis[4550];
