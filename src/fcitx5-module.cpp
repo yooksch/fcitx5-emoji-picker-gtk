@@ -61,9 +61,6 @@ void Fcitx5EmojiPickerModule::process_key_event(fcitx::KeyEvent& key_event) {
   if (key_event.key().code() == KEY_ESCAPE) {
     key_event.accept();
 
-    if (m_window)
-      m_window->reset();
-
     deactivate();
     return;
   }
@@ -102,6 +99,7 @@ void Fcitx5EmojiPickerModule::deactivate() {
 
   if (m_window) {
     m_window->hide();
+    m_window->reset();
   }
 }
 
